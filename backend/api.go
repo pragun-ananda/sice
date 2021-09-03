@@ -3,11 +3,12 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
-	// "encoding/json"
-	// "github.com/gorilla/mux"
+
+	"github.com/gorilla/mux"
 )
 
 type Entry struct {
@@ -19,13 +20,30 @@ type Entry struct {
 	Longitude float32 `json:"longitude"`
 }
 
-// Will be replaced with a database 
+// Will be replaced with a database
 var Entries []Entry
 var Id int = 0
 
 func populateEntries() {
-	Entries = []Entry {
-		Entry{Id=1 }
+	Entries = []Entry{
+		Entry{Id: 1, Title: "Test", Desc: "Test Desc", Rating: 0, Latitude: 0.0, Longitude: 0.0},
+		Entry{Id: 2, Title: "Test", Desc: "Test Desc", Rating: 0, Latitude: 0.0, Longitude: 0.0},
+	}
+}
+
+func returnAllEntries(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Endpoint Hit: returnAllArticles")
+	json.NewEncoder(w).Encode(Entries)
+}
+
+func returnSingleEntry(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	key := vars["id"]
+
+	for _, entry := range Entries {
+		if entry.Id == key {
+			json.NewEncoder(w).Encode(entry)
+		}
 	}
 }
 
@@ -36,6 +54,8 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 
 func handleRequests() {
 	http.HandleFunc("/", homePage)
+	http.HandleFunc("/all", returnAllEntries)
+	http.HandleFunc("/entries/{}", returnSingleEntry)
 	log.Fatal(http.ListenAndServe(":10000", nil))
 }
 
@@ -44,8 +64,7 @@ func main() {
 	handleRequests()
 }
 
-
 /*
-Resources: 
+Resources:
 	- Encryption: https://tutorialedge.net/golang/go-encrypt-decrypt-aes-tutorial/
 */
