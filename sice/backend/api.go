@@ -137,7 +137,7 @@ func handleRequests() {
 
 func main() {
 	populateEntries()
-	connectToDB()
+	connectToDB() // source: https://www.digitalocean.com/community/tutorials/how-to-use-go-with-mongodb-using-the-mongodb-go-driver
 	handleRequests()
 }
 
