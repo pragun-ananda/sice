@@ -139,7 +139,7 @@ class _RandomWordsState extends State<RandomWords> {
       itemBuilder: (context, i) {
         if (i.isOdd) return const Divider();
 
-        final index = 1 ~/ 2;
+        final index = i ~/ 2;
         if (index >= _suggestions.length) {
           _suggestions.addAll(generateWordPairs().take(10));
         }
