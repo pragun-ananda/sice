@@ -3,14 +3,20 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gorilla/mux"
+
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
 type Entry struct {
@@ -22,9 +28,9 @@ type Entry struct {
 	Longitude float32 `json:"longitude"`
 }
 
-// Will be replaced with a database
 var Entries []Entry
 var idCount int64 = 0
+var client mongo.Client
 
 func populateEntries() {
 	Entries = []Entry{
@@ -94,19 +100,44 @@ func homePage(w http.ResponseWriter, r *http.Request) {
 	fmt.Println("Endpoint Hit: homePage")
 }
 
+func connectToDB() mongo.NewClient {
+	// parse mongoauth.json and replace Mongo URI with it
+	// source: https://www.mongodb.com/blog/post/quick-start-golang-mongodb-starting-and-setup
+	client, err := mongo.NewClient(options.Client().ApplyURI("<ATLAS_URI_HERE>"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ctx, _ := context.WithTimeout(context.Background(), 10*time.Second)
+	err = client.Connect(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(ctx)
+
+	err = client.Ping(ctx, readpref.Primary())
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	collection := client.Database("sice").Collection("entries")
+	return collection
+}
+
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
-	myRouter.HandleFunc("/", homePage)
-	myRouter.HandleFunc("/all", getAllEntries).Methods("GET")
-	myRouter.HandleFunc("/entries/{id}", getSingleEntry).Methods("GET")
-	myRouter.HandleFunc("/entries", createNewEntry).Methods("POST")
-	myRouter.HandleFunc("/entries/{id}", deleteEntry).Methods("DELETE")
-	myRouter.HandleFunc("/entries/{id}", updateEntry).Methods("UPDATE")
+	go myRouter.HandleFunc("/", homePage)
+	go myRouter.HandleFunc("/all", getAllEntries).Methods("GET")
+	go myRouter.HandleFunc("/entries/{id}", getSingleEntry).Methods("GET")
+	go myRouter.HandleFunc("/entries", createNewEntry).Methods("POST")
+	go myRouter.HandleFunc("/entries/{id}", deleteEntry).Methods("DELETE")
+	go myRouter.HandleFunc("/entries/{id}", updateEntry).Methods("UPDATE")
 	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 
 func main() {
 	populateEntries()
+	connectToDB()
 	handleRequests()
 }
 
