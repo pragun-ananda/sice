@@ -8,12 +8,13 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/mux"
 )
 
 type Entry struct {
-	Id        int     `json:"id"`
+	Id        int64   `json:"id"`
 	Title     string  `json:"name"`
 	Desc      string  `json:"desc"`
 	Rating    int     `json:"rating"`
@@ -23,7 +24,7 @@ type Entry struct {
 
 // Will be replaced with a database
 var Entries []Entry
-var Id int = 0
+var idCount int64 = 0
 
 func populateEntries() {
 	Entries = []Entry{
@@ -39,10 +40,16 @@ func getAllEntries(w http.ResponseWriter, r *http.Request) {
 
 func getSingleEntry(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
-	key := vars["id"]
+	id := vars["id"]
+	numId, err := strconv.ParseInt(id, 10, 64)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	for _, entry := range Entries {
-		if entry.Id == key {
+		if entry.Id == numId {
 			json.NewEncoder(w).Encode(entry)
 		}
 	}
@@ -54,16 +61,24 @@ func createNewEntry(w http.ResponseWriter, r *http.Request) {
 
 	var entry Entry
 	json.Unmarshal(reqBody, &entry)
+	entry.Id = idCount
 	Entries = append(Entries, entry)
 	json.NewEncoder(w).Encode(entry)
+	idCount++
 }
 
 func deleteEntry(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
+	numId, err := strconv.ParseInt(id, 10, 64)
+
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 
 	for index, entry := range Entries {
-		if entry.Id == id {
+		if entry.Id == numId {
 			Entries = append(Entries[:index], Entries[index+1:]...)
 		}
 	}
@@ -87,7 +102,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/entries", createNewEntry).Methods("POST")
 	myRouter.HandleFunc("/entries/{id}", deleteEntry).Methods("DELETE")
 	myRouter.HandleFunc("/entries/{id}", updateEntry).Methods("UPDATE")
-	log.Fatal(http.ListenAndServe(":10000", nil))
+	log.Fatal(http.ListenAndServe(":10000", myRouter))
 }
 
 func main() {
