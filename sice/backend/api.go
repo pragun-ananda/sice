@@ -24,11 +24,13 @@ func populateEntries() {
 }
 
 func getAllRequest(w http.ResponseWriter, r *http.Request) {
-	fmt.Println("Endpoint Hit: returnAllArticles")
+	/* Returns a JSON response encoding all records */
+	fmt.Println("Endpoint Hit: getAllEntries")
 	json.NewEncoder(w).Encode(Entries)
 }
 
 func getRequest(w http.ResponseWriter, r *http.Request) {
+	/* Returns JSON response for a specified item id*/
 	vars := mux.Vars(r)
 	id := vars["id"]
 	numId, err := strconv.ParseInt(id, 10, 64)
@@ -46,6 +48,7 @@ func getRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func postRequest(w http.ResponseWriter, r *http.Request) {
+	/* Handles request to POST a new entry */
 	reqBody, _ := ioutil.ReadAll(r.Body)
 	fmt.Fprintf(w, "%+v", string(reqBody))
 
@@ -58,6 +61,7 @@ func postRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func deleteRequest(w http.ResponseWriter, r *http.Request) {
+	/* Handles request to DELETE an entry with a specified id */
 	vars := mux.Vars(r)
 	id := vars["id"]
 	numId, err := strconv.ParseInt(id, 10, 64)
@@ -75,16 +79,19 @@ func deleteRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func putRequest(w http.ResponseWriter, r *http.Request) {
+	/* Handles PUT request to update a record (deletes old record and posts new one) */
 	deleteRequest(w, r)
 	postRequest(w, r)
 }
 
 func homePage(w http.ResponseWriter, r *http.Request) {
+	/* Mock function to test API root endpoint */
 	fmt.Fprintf(w, "Welcome to the HomePage!")
 	fmt.Println("Endpoint Hit: homePage")
 }
 
 func handleRequests() {
+	/* Helper function to handle API routing */
 	myRouter := mux.NewRouter().StrictSlash(true)
 	go myRouter.HandleFunc("/", homePage)
 	go myRouter.HandleFunc("/all", getAllRequest).Methods("GET")
@@ -97,17 +104,12 @@ func handleRequests() {
 
 func main() {
 	populateEntries()
-	client = connectToDB() // source: https://www.digitalocean.com/community/tutorials/how-to-use-go-with-mongodb-using-the-mongodb-go-driver
+	client = connectToDB()
 	collection := client.Database("sice").Collection("entries")
 	handleRequests()
 }
 
 /*
-Resources:
-	- Encryption: https://tutorialedge.net/golang/go-encrypt-decrypt-aes-tutorial/
-
 TODO:
-	- abstract database CRUD operations (into a separate file) and keep API handling in this file
-	- add security (API Key)
-
+	- add API security
 */

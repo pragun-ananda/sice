@@ -27,8 +27,12 @@ var client *mongo.Client
 var collection *mongo.Collection
 
 func connectToDB() *mongo.Client {
-	// parse mongoauth.json and replace Mongo URI with it
-	// source: https://www.mongodb.com/blog/post/quick-start-golang-mongodb-starting-and-setup
+	/*
+		Uses URI to connect to MongoDB Atlas via MongoDB Driver and returns client connection
+
+		Source: https://www.mongodb.com/blog/post/quick-start-golang-mongodb-starting-and-setup
+		Source: https://www.digitalocean.com/community/tutorials/how-to-use-go-with-mongodb-using-the-mongodb-go-driver
+	*/
 	client, err := mongo.NewClient(options.Client().ApplyURI("<ATLAS_URI_HERE>"))
 	if err != nil {
 		log.Fatal(err)
@@ -50,14 +54,16 @@ func connectToDB() *mongo.Client {
 }
 
 func create(newEntry Entry) primitive.ObjectID {
+	/* Inserts a new entry and returns the inserted record id */
 	insertResult, err := collection.InsertOne(context.TODO(), newEntry)
 	if err != nil {
 		log.Fatal(err)
 	}
-	return insertResult.InsertedID // what type is this??
+	return insertResult.InsertedID
 }
 
 func read(findEntry Entry, filter bson.D) Entry {
+	/* Finds an entry based on a BSON filter. Decodes the found entry and returns it or returns an error*/
 	err := collection.FindOne(context.TODO(), filter).Decode(&findEntry)
 	if err != nil {
 		log.Fatal(err)
@@ -66,6 +72,7 @@ func read(findEntry Entry, filter bson.D) Entry {
 }
 
 func update(filter bson.D, updateTerms bson.D) (int64, int64) {
+	/* Finds an entry using a BSON filter and then updates it with BSON update terms */
 	updateResult, err := collection.UpdateOne(context.TODO(), filter, updateTerms)
 	if err != nil {
 		log.Fatal(err)
@@ -74,17 +81,10 @@ func update(filter bson.D, updateTerms bson.D) (int64, int64) {
 }
 
 func delete(filter bson.D) int64 {
+	/* Deletes a record matching a BSON filter and returns the deleted record id*/
 	deleteResult, err := collection.DeleteMany(context.TODO(), filter)
 	if err != nil {
 		log.Fatal(err)
 	}
 	return deleteResult.DeletedCount
 }
-
-// func main() {
-// 	fmt.Println("Test")
-// }
-
-/*
-https://github.com/tfogo/mongodb-go-tutorial/blob/master/main.go
-*/
