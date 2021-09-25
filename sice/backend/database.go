@@ -1,5 +1,3 @@
-// Connect to MongoDB Driver - Manage CRUD Operations
-
 package main
 
 import (
@@ -28,7 +26,7 @@ var collection *mongo.Collection
 
 func connectToDB() *mongo.Client {
 	/*
-		Uses URI to connect to MongoDB Atlas via MongoDB Driver and returns client connection
+		Uses secure URI to connect to MongoDB Atlas via MongoDB Go Driver and returns client connection
 
 		Source: https://www.mongodb.com/blog/post/quick-start-golang-mongodb-starting-and-setup
 		Source: https://www.digitalocean.com/community/tutorials/how-to-use-go-with-mongodb-using-the-mongodb-go-driver

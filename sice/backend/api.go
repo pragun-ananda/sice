@@ -1,5 +1,3 @@
-// Serve API requests - GET, POST, etc.
-
 package main
 
 import (
